@@ -59,10 +59,8 @@ export class Source extends BaseSource<Params> {
     if (!this.snips) {
       return;
     }
-    // console.table(this.snips);
     for (const snipFile of this.snips) {
       const mtime = Deno.statSync(snipFile).mtime;
-      // console.log({ snipFile, cached: snipFile in this.cache, m: mtime.getTime() });
       if (
         snipFile in this.cache &&
         this.cache[snipFile].mtime?.getTime() == mtime?.getTime()
@@ -86,16 +84,12 @@ export class Source extends BaseSource<Params> {
     sourceParams
   }: OnEventArguments<Params>): Promise<void> {
     const bufnr = await fn.bufnr(denops);
-    // console.log({ bufnr });
     this.snips = [];
     this.filetype = await fn.getbufvar(denops, bufnr, "&filetype") as string;
     this.dirs = sourceParams.dirs as string[];
 
-    // console.log('onEvent ' + this.filetype);
     for (const dir of this.dirs) {
       for await (const file of expandGlob(`${dir}/all/*.snip`)) {
-        // console.log('all');
-        // console.log(file);
         if (this.snips[file.path] == undefined) {
           this.snips.push(file.path);
         }
@@ -105,21 +99,14 @@ export class Source extends BaseSource<Params> {
         const dirPath = `${dir}/${this.filetype}`;
         const snipGlob = `${dirPath}/*.snip`;
         let isThere = await exists(dirPath);
-        // console.log({ isThere, dirPath, snipGlob });
 
         for await (const file of expandGlob(snipGlob)) {
-          // console.log('filetype ' + this.filetype);
-          // console.log(file);
           if (this.snips[file.path] == undefined) {
             this.snips.push(file.path);
           }
         }
       }
     };
-    // debugger;
-    // console.table(this.dirs);
-    // console.table(this.snips);
-
     this.makeCache();
   }
 
