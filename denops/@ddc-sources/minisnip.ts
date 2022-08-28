@@ -2,12 +2,12 @@ import {
   BaseSource,
   DdcEvent,
   Item
-} from "https://deno.land/x/ddc_vim@v2.3.0/types.ts";
+} from "https://deno.land/x/ddc_vim@v2.3.1/types.ts";
 import {
   GatherArguments,
   OnEventArguments
-} from "https://deno.land/x/ddc_vim@v2.3.0/base/source.ts";
-import { fn } from "https://deno.land/x/ddc_vim@v2.3.0/deps.ts";
+} from "https://deno.land/x/ddc_vim@v2.3.1/base/source.ts";
+import { fn } from "https://deno.land/x/ddc_vim@v2.3.1/deps.ts";
 
 import { exists, expandGlob } from "https://deno.land/std@0.142.0/fs/mod.ts";
 import { parse } from "https://deno.land/std@0.142.0/path/mod.ts";
@@ -23,7 +23,21 @@ const getSnip = (fileName: string): Promise<Array<string>> => {
 const prepareSnip = (path: string) => {
   const parsed = parse(path);
   const contents = getSnip(path);
-  return { word: parsed.name, menu: contents[0].replace(/^\? /, '') };
+  return { word: parsed.name, menu: contents[0].replace(/^\? /, "") };
+};
+
+const snipsForType = async (snips: string[], dir: string, filetype: string) => {
+  const dirPath = `${dir}/${filetype}`;
+  const snipGlob = `${dirPath}/*.snip`;
+  let isThere = await exists(dirPath);
+
+  if (isThere) {
+    for await (const file of expandGlob(snipGlob)) {
+      if (snips[file.path] == undefined) {
+        snips.push(file.path);
+      }
+    }
+  }
 };
 
 type snipCache = {
@@ -31,11 +45,16 @@ type snipCache = {
   candidates: Item[];
 };
 
+type extend = {
+  [key: string]: string[];
+};
+
 export function isUpper(char: string) {
   return /[A-Z]/.test(char[0]);
 }
 
 type Params = {
+  extend: extend;
   dirs: string[];
   home: string;
   smartcase: boolean;
@@ -45,15 +64,18 @@ type Params = {
 export class Source extends BaseSource<Params> {
   private cache: { [filename: string]: snipCache } = {};
   private snips: string[] = [];
+  private filetype: string = "";
+  private dirs: string[] = [];
+  private extend: extend = {};
   events = ["InsertEnter"] as DdcEvent[];
 
-  private getSnips(snipOpt: string): string[] {
-    if (snipOpt) {
-      return snipOpt.split(",");
-    } else {
-      return [];
-    }
-  }
+  // private getSnips(snipOpt: string): string[] {
+  //   if (snipOpt) {
+  //     return snipOpt.split(",");
+  //   } else {
+  //     return [];
+  //   }
+  // }
 
   private makeCache(): void {
     if (!this.snips) {
@@ -85,28 +107,22 @@ export class Source extends BaseSource<Params> {
   }: OnEventArguments<Params>): Promise<void> {
     const bufnr = await fn.bufnr(denops);
     this.snips = [];
-    this.filetype = await fn.getbufvar(denops, bufnr, "&filetype") as string;
+    this.filetype = (await fn.getbufvar(denops, bufnr, "&filetype")) as string;
     this.dirs = sourceParams.dirs as string[];
+    this.extend = sourceParams.extend as extend;
 
     for (const dir of this.dirs) {
-      for await (const file of expandGlob(`${dir}/all/*.snip`)) {
-        if (this.snips[file.path] == undefined) {
-          this.snips.push(file.path);
-        }
-      }
-
-      if (this.filetype != '') {
-        const dirPath = `${dir}/${this.filetype}`;
-        const snipGlob = `${dirPath}/*.snip`;
-        let isThere = await exists(dirPath);
-
-        for await (const file of expandGlob(snipGlob)) {
-          if (this.snips[file.path] == undefined) {
-            this.snips.push(file.path);
+      await snipsForType(this.snips, dir, "all");
+      if (this.filetype != "") {
+        await snipsForType(this.snips, dir, this.filetype);
+        const extensions = this.extend[this.filetype];
+        if (typeof extensions != "undefined") {
+          for (const extension of extensions) {
+            await snipsForType(this.snips, dir, extension);
           }
         }
       }
-    };
+    }
     this.makeCache();
   }
 
@@ -141,6 +157,7 @@ export class Source extends BaseSource<Params> {
 
   params(): Params {
     return {
+      extend: {},
       dirs: [],
       home: "",
       smartcase: true,

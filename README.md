@@ -22,5 +22,10 @@ Plug 'akemrir/ddc-minisnip'
 
 ```
 call ddc#custom#patch_global('sources', ['minisnip'])
-call ddc#custom#patch_global('sourceParams', { 'minisnip': { 'home': $HOME, 'dirs': g:miniSnip_dirs })
+call ddc#custom#patch_global('sourceParams', {
+\  'minisnip': {
+\    'home': $HOME,
+\    'dirs': g:miniSnip_dirs,
+\    'extend': g:miniSnip_extends }
+\  )
 ```
