@@ -2,12 +2,12 @@ import {
   BaseSource,
   DdcEvent,
   Item
-} from "https://deno.land/x/ddc_vim@v2.3.1/types.ts";
+} from "https://deno.land/x/ddc_vim@v2.5.0/types.ts";
 import {
   GatherArguments,
   OnEventArguments
-} from "https://deno.land/x/ddc_vim@v2.3.1/base/source.ts";
-import { fn } from "https://deno.land/x/ddc_vim@v2.3.1/deps.ts";
+} from "https://deno.land/x/ddc_vim@v2.5.0/base/source.ts";
+import { fn } from "https://deno.land/x/ddc_vim@v2.5.0/deps.ts";
 
 import { exists, expandGlob } from "https://deno.land/std@0.142.0/fs/mod.ts";
 import { parse } from "https://deno.land/std@0.142.0/path/mod.ts";
