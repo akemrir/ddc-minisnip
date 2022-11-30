@@ -2,15 +2,15 @@ import {
   BaseSource,
   DdcEvent,
   Item
-} from "https://deno.land/x/ddc_vim@v2.5.1/types.ts";
+} from "https://deno.land/x/ddc_vim@v3.3.0/types.ts";
 import {
   GatherArguments,
   OnEventArguments
-} from "https://deno.land/x/ddc_vim@v2.5.1/base/source.ts";
-import { fn } from "https://deno.land/x/ddc_vim@v2.5.1/deps.ts";
+} from "https://deno.land/x/ddc_vim@v3.3.0/base/source.ts";
+import { fn } from "https://deno.land/x/ddc_vim@v3.3.0/deps.ts";
 
-import { exists, expandGlob } from "https://deno.land/std@0.142.0/fs/mod.ts";
-import { parse } from "https://deno.land/std@0.157.0/path/mod.ts";
+import { exists, expandGlob } from "https://deno.land/std@0.166.0/fs/mod.ts";
+import { parse } from "https://deno.land/std@0.166.0/path/mod.ts";
 import dir from "https://deno.land/x/dir@1.5.1/mod.ts";
 const homeDirectory = dir("home");
 
