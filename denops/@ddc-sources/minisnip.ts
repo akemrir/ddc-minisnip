@@ -2,19 +2,19 @@ import {
   BaseSource,
   DdcEvent,
   Item
-} from "https://deno.land/x/ddc_vim@v3.3.0/types.ts";
+} from "https://deno.land/x/ddc_vim@v3.4.0/types.ts";
 import {
   GatherArguments,
   OnEventArguments
-} from "https://deno.land/x/ddc_vim@v3.3.0/base/source.ts";
-import { fn } from "https://deno.land/x/ddc_vim@v3.3.0/deps.ts";
+} from "https://deno.land/x/ddc_vim@v3.4.0/base/source.ts";
+import { fn } from "https://deno.land/x/ddc_vim@v3.4.0/deps.ts";
 
-import { exists, expandGlob } from "https://deno.land/std@0.166.0/fs/mod.ts";
-import { parse } from "https://deno.land/std@0.166.0/path/mod.ts";
-import dir from "https://deno.land/x/dir@1.5.1/mod.ts";
-const homeDirectory = dir("home");
+import { expandGlob } from "https://deno.land/std@0.175.0/fs/mod.ts";
+import { parse } from "https://deno.land/std@0.175.0/path/mod.ts";
+// import dir from "https://deno.land/x/dir@1.5.1/mod.ts";
+// const homeDirectory = dir("home");
 
-const getSnip = (fileName: string): Promise<Array<string>> => {
+const getSnip = (fileName: string): string[] => {
   const decoder = new TextDecoder("utf-8");
   const text: string = decoder.decode(Deno.readFileSync(fileName));
   return text.split("\n");
@@ -29,13 +29,10 @@ const prepareSnip = (path: string) => {
 const snipsForType = async (snips: string[], dir: string, filetype: string) => {
   const dirPath = `${dir}/${filetype}`;
   const snipGlob = `${dirPath}/*.snip`;
-  let isThere = await exists(dirPath);
 
-  if (isThere) {
-    for await (const file of expandGlob(snipGlob)) {
-      if (snips[file.path] == undefined) {
-        snips.push(file.path);
-      }
+  for await (const file of expandGlob(snipGlob)) {
+    if (snips[file.path as keyof typeof snips] == undefined) {
+      snips.push(file.path);
     }
   }
 };
@@ -137,9 +134,9 @@ export class Source extends BaseSource<Params> {
     const str = completeStr;
     const isFirstUpper = str.length ? isUpper(str[0]) : false;
     const isSecondUpper = str.length > 1 ? isUpper(str[1]) : false;
-    return this.snips
-      .map((snip) => this.cache[snip].candidates)
-      .flatMap((candidates) => candidates)
+    const candidates = await Promise.all(this.snips.map((snip) => this.cache[snip].candidates))
+
+    return candidates.flatMap((candidates) => candidates)
       .map((candidate) => {
         let word = candidate.word;
         if (sourceParams.smartcase) {
